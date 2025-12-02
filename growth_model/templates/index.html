@@ -3,19 +3,38 @@
 <head>
     <title>Bacterial Growth Modeller</title>
     <style>
-        h1 {
-            font-size: 40px;
-            text-align: center;
-            width: 50%;
-            margin: auto;
-        }  
-        h2{
-            font-size: 20px;
-            text-align: center;
-            width: 40%;
+        /* Center the form */
+        form {
+            width: 400px;
             margin: auto;
         }
-    </style>
+        
+        /* Each slider row as flex */
+        .slider-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        /* Label takes fixed width */
+        .slider-row label {
+            width: 150px;
+        }
+        
+        /* Slider takes remaining space */
+        .slider-row input[type=range] {
+            flex: 1;
+        }
+        
+        /* Number display: fixed width, slightly right-shifted */
+        .slider-row span {
+            display: inline-block;
+            width: 60px; /* fixed width prevents jumping */
+            text-align: right; /* shift numbers slightly to the right */
+            margin-left: 10px;
+            font-family: monospace; /* optional, makes width more consistent */
+        }
+        </style>
 
 </head>
 <body>
@@ -24,18 +43,41 @@
 <h1>
     <form method="POST" action="{% url 'index' %}">
         {% csrf_token %}
-        <label for="initial_density">Initial Density:</label>
-        <input type="text" id="i_denisity" name="i_density" placeholder="0.1"><br><br>
-
-        <label for="platau_density">Platau Density:</label>
-        <input type="text" id="p_density" name="p_density"placeholder="10"><br><br>
-
-        <label for="growth_rate">Growth Rate:</label>
-        <input type="text" id="g_rate" name="g_rate"placeholder="0.2"><br><br>
+        <label for="i_density">Initial Density:</label>
+        <input type="range" id="i_density" name="i_density" placeholder="0.1" min="0.00001" max="1" step="0.01"value="0.1">
+        <span id="i_density_val">0.1</span><br><br>
+        
+        <label for="p_density">Plateau Density:</label>
+        <input type="range" id="p_density" name="p_density" placeholder="10" min="1" max="1000" value="1000">
+        <span id="p_density_val">800</span><br><br>
+        
+        <label for="g_rate">Growth Rate:</label>
+        <input type="range" id="g_rate" name="g_rate" placeholder="0.2" min="0.1" max="1" step="0.01" value="0.15">
+        <span id="g_rate_val">0.15</span><br><br>
+        
 
         <input type="submit" value="Submit">
     </form>
 </h1>
+
+    <script>
+        // Link sliders to their display spans
+        const sliders = [
+            {id: "i_density", display: "i_density_val"},
+            {id: "p_density", display: "p_density_val"},
+            {id: "g_rate", display: "g_rate_val"}
+        ];
+    
+        sliders.forEach(s => {
+            const slider = document.getElementById(s.id);
+            const display = document.getElementById(s.display);
+            slider.addEventListener("input", () => {
+                display.textContent = slider.value;
+            });
+        });
+    </script>
+
+
 
 <h2>
 {% if searched %}
