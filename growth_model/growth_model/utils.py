@@ -63,12 +63,12 @@ def create_data(model):
     time_steps = []
     densitys = []
     
-    for t in range(0, 50):
+    for t in range(0, 30):
         time_steps.append(t)
         densitys.append(model.evaluate(t))
 
     growth_data = pd.DataFrame({
-        "time_step": time_steps,
+        "time step": time_steps,
         "density": densitys
     })
 
@@ -91,12 +91,12 @@ def basic_plotting(growth_data, greatest_growth_index):
     image_path = os.path.join(os.path.dirname(__file__), "../static/images", "scatter_growth.png")
     
     plt.figure(figsize=(6, 4))
-    plt.plot(growth_data["time_step"], growth_data["density"], 
+    plt.plot(growth_data["time step"], growth_data["density"], 
              marker='o', color='tab:blue', linestyle='-', linewidth=2, markersize=6, label="Growth")
     
     # Add vertical dotted line at the point of greatest change
     plt.axvline(
-        x=growth_data["time_step"][greatest_growth_index], 
+        x=growth_data["time step"][greatest_growth_index], 
         color='red', linestyle='--', linewidth=2, label='Max Growth Change'
     )
     
@@ -115,7 +115,7 @@ def run_model(ininital_density,platau_density,growth_rate):
     platau_density = float(platau_density)
     growth_rate = float(growth_rate)
     
-    model=GompertzGrowth(ininital_density,platau_density,growth_rate,temperature=100,Tmin=5,Tmax=45,c=0.01)
+    model=GompertzGrowth(ininital_density,platau_density,growth_rate,temperature=90,Tmin=5,Tmax=45,c=0.01)
     growth_data = create_data(model)
     greatest_growth_index = get_highest_growth_step(growth_data)
     
