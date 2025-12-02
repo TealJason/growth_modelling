@@ -5,15 +5,10 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import os
 class GompertzGrowth:
-    def __init__(self, N0, Ninf, b_max, temperature, Tmin, Tmax, c):
+    def __init__(self, N0, Ninf, b_max, temperature, Tmin, Tmax, c, k0=0.001, alpha=0.2):
         """
-        N0: initial density
-        Ninf: maximum density
-        b_max: max growth rate at optimal temperature
-        temperature: current temperature
-        Tmin: minimum growth temperature
-        Tmax: maximum growth temperature
-        c: 'an additional parameter to enable the model to fit the data for temperatures above the optimal temperature' #thanks ratowsky nice paper 
+        k0: baseline death rate at Tmax
+        alpha: how fast death increases with temperature
         """
         self.N0 = N0
         self.Ninf = Ninf
@@ -22,35 +17,47 @@ class GompertzGrowth:
         self.Tmin = Tmin
         self.Tmax = Tmax
         self.c = c
-        
-    #I need to figure out how this adjustmen in the growth is actually working
-    def adjusted_growth_rate(self):
+        self.k0 = k0
+        self.alpha = alpha
+
+    def growth_rate(self):
         T = self.temperature
 
+        # no growth below Tmin or above Tmax
         if T <= self.Tmin or T >= self.Tmax:
-            return 0.0  # no growth
+            return 0.0
 
-        # Ratkowsky with above-optimum tail
+        # Ratkowsky above-optimal extension
         mu_sqrt = self.b_max * (T - self.Tmin) * (1 - math.exp(self.c * (T - self.Tmax)))
-        
         if mu_sqrt < 0:
             return 0.0
-        
-        return mu_sqrt ** 2
+
+        return mu_sqrt ** 2  # final μ
+
+    def death_rate(self):
+        T = self.temperature
+        if T <= self.Tmax:
+            return 0.0
+
+        # Arrhenius-like death scaling
+        return self.k0 * math.exp(self.alpha * (T - self.Tmax))
 
     def evaluate(self, t):
-        b_adj = self.adjusted_growth_rate()
+        μ = self.growth_rate()
+        k = self.death_rate()
 
-        if b_adj >= 0:
-            # Standard Gompertz growth
-            return self.N0 * math.exp(math.log(self.Ninf / self.N0) * (1 - math.exp(-b_adj * t)))
-        else:
-            # Death-phase Gompertz
-            k = -b_adj
+        # CASE 1: Growth
+        if μ > 0:
+            return self.N0 * math.exp(math.log(self.Ninf / self.N0) *
+                                      (1 - math.exp(-μ * t)))
+        # CASE 2: Death
+        if k > 0:
             N_min = 1e-6
-            return self.N0 * math.exp(-math.log(self.N0 / N_min) * math.exp(-k * t))
+            return self.N0 * math.exp(-math.log(self.N0 / N_min) *
+                                      math.exp(-k * t))
 
-
+        # CASE 3: No change
+        return self.N0
 def create_data(model):
     time_steps = []
     growth_levels = []
