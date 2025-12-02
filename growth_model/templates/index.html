@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bacterial Growth Modeller</title>
+    <style>
+        h1 {
+            font-size: 40px;
+            text-align: center;
+            width: 50%;
+            margin: auto;
+        }  
+        h2{
+            font-size: 20px;
+            text-align: center;
+            width: 40%;
+            margin: auto;
+        }
+    </style>
+
+</head>
+<body>
+<h1>
+    <form method="POST" action="{% url 'index' %}">
+        {% csrf_token %}
+        <label for="initial_density">Initial Density:</label>
+        <input type="text" id="i_denisity" name="i_density"><br><br>
+
+        <label for="platau_density">Platau Density:</label>
+        <input type="text" id="p_density" name="p_density"><br><br>
+
+        <label for="growth_rate">Growth Rate:</label>
+        <input type="text" id="g_rate" name="g_rate"><br><br>
+
+        <input type="submit" value="Submit">
+    </form>
+</h1>
+<h2>
+{% if searched %}
+
+{{ result|safe }}
+
+
+{% endif %}
+<h2>
+</body>
+</html>
