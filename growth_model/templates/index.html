@@ -19,28 +19,42 @@
 
 </head>
 <body>
+    {% load static %}
+
 <h1>
     <form method="POST" action="{% url 'index' %}">
         {% csrf_token %}
         <label for="initial_density">Initial Density:</label>
-        <input type="text" id="i_denisity" name="i_density"><br><br>
+        <input type="text" id="i_denisity" name="i_density" placeholder="0.1"><br><br>
 
         <label for="platau_density">Platau Density:</label>
-        <input type="text" id="p_density" name="p_density"><br><br>
+        <input type="text" id="p_density" name="p_density"placeholder="10"><br><br>
 
         <label for="growth_rate">Growth Rate:</label>
-        <input type="text" id="g_rate" name="g_rate"><br><br>
+        <input type="text" id="g_rate" name="g_rate"placeholder="0.2"><br><br>
 
         <input type="submit" value="Submit">
     </form>
 </h1>
+
 <h2>
 {% if searched %}
 
-{{ result|safe }}
+    <div style="display: flex; gap: 20px; justify-content: center;">
 
+        <div>
+            {{ result|safe }}
+        </div>
+
+        <div>
+            <img src="{% static 'images/scatter_growth.png' %}" 
+                alt="Result plot"
+                style="max-width: 600px;">
+        </div>
+
+</div>
 
 {% endif %}
-<h2>
+</h2>
 </body>
 </html>

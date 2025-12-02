@@ -2,7 +2,8 @@
 
 import math
 import pandas as pd
-
+from matplotlib import pyplot as plt
+import os
 class GompertzGrowth:
     def __init__(self, initial_density, plateau_density, growth_rate):
         self.N0 = initial_density
@@ -19,7 +20,7 @@ def create_data(model):
     time_steps = []
     growth_levels = []
     
-    for t in range(0, 25):
+    for t in range(0, 50):
         time_steps.append(t)
         growth_levels.append(model.evaluate(t))
 
@@ -30,13 +31,35 @@ def create_data(model):
 
     return growth_data
 
+def basic_plotting(growth_data):
+    # Save path
+    image_path = os.path.join(os.path.dirname(__file__), "../static/images", "scatter_growth.png")
+    
+    # Create figure with a decent size
+    plt.figure(figsize=(6, 4))
+    
+    # Scatter points with a line
+    plt.plot(growth_data["time_step"], growth_data["growth_level"], 
+             marker='o', color='tab:blue', linestyle='-', linewidth=2, markersize=6, label="Growth")
+    
+    # Labels and title
+    plt.xlabel("Time Step", fontsize=12)
+    plt.ylabel("Growth Level", fontsize=12)
+    plt.title("Bacterial Growth over Time (Gompertz Model)", fontsize=14)
+    
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    plt.savefig(image_path)
+    plt.close()
+    
 def run_model(ininital_density,platau_density,growth_rate):
-    ininital_density= int(ininital_density,)
-    platau_density = int(platau_density)
-    growth_rate = int(growth_rate)
+    ininital_density= float(ininital_density,)
+    platau_density = float(platau_density)
+    growth_rate = float(growth_rate)
     
     model=GompertzGrowth(ininital_density,platau_density,growth_rate)
     growth_data = create_data(model)
-    print(growth_data)
+    
+    basic_plotting(growth_data)
     return growth_data
     
