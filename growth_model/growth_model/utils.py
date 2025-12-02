@@ -31,22 +31,37 @@ def create_data(model):
 
     return growth_data
 
-def basic_plotting(growth_data):
+def get_highest_growth_step(growth_data):
+    #Go through the df checking the change between each step, return the step with the greatest change
+    greatest_growth = 0
+    greatest_growth_index = 0
+    
+    for i in range(len(growth_data) - 1):
+        current_change = growth_data["growth_level"][i + 1] - growth_data["growth_level"][i]
+        if current_change > greatest_growth:
+            greatest_growth = current_change
+            greatest_growth_index = i
+    return greatest_growth_index
+
+def basic_plotting(growth_data, greatest_growth_index):
     # Save path
     image_path = os.path.join(os.path.dirname(__file__), "../static/images", "scatter_growth.png")
     
-    # Create figure with a decent size
     plt.figure(figsize=(6, 4))
-    
-    # Scatter points with a line
     plt.plot(growth_data["time_step"], growth_data["growth_level"], 
              marker='o', color='tab:blue', linestyle='-', linewidth=2, markersize=6, label="Growth")
     
-    # Labels and title
+    # Add vertical dotted line at the point of greatest change
+    plt.axvline(
+        x=growth_data["time_step"][greatest_growth_index], 
+        color='red', linestyle='--', linewidth=2, label='Max Growth Change'
+    )
+    
     plt.xlabel("Time Step", fontsize=12)
     plt.ylabel("Growth Level", fontsize=12)
     plt.title("Bacterial Growth over Time (Gompertz Model)", fontsize=14)
     
+    plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
     plt.savefig(image_path)
@@ -59,7 +74,8 @@ def run_model(ininital_density,platau_density,growth_rate):
     
     model=GompertzGrowth(ininital_density,platau_density,growth_rate)
     growth_data = create_data(model)
+    greatest_growth_index = get_highest_growth_step(growth_data)
     
-    basic_plotting(growth_data)
+    basic_plotting(growth_data,greatest_growth_index)
     return growth_data
     
