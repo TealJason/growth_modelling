@@ -5,15 +5,50 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import os
 class GompertzGrowth:
-    def __init__(self, initial_density, plateau_density, growth_rate):
-        self.N0 = initial_density
-        self.Ninf = plateau_density
-        self.b = growth_rate
+    def __init__(self, N0, Ninf, b_max, temperature, Tmin, Tmax, c):
+        """
+        N0: initial density
+        Ninf: maximum density
+        b_max: max growth rate at optimal temperature
+        temperature: current temperature
+        Tmin: minimum growth temperature
+        Tmax: maximum growth temperature
+        c: 'an additional parameter to enable the model to fit the data for temperatures above the optimal temperature' #thanks ratowsky nice paper 
+        """
+        self.N0 = N0
+        self.Ninf = Ninf
+        self.b_max = b_max
+        self.temperature = temperature
+        self.Tmin = Tmin
+        self.Tmax = Tmax
+        self.c = c
+        
+    #I need to figure out how this adjustmen in the growth is actually working
+    def adjusted_growth_rate(self):
+        T = self.temperature
+
+        if T <= self.Tmin or T >= self.Tmax:
+            return 0.0  # no growth
+
+        # Ratkowsky with above-optimum tail
+        mu_sqrt = self.b_max * (T - self.Tmin) * (1 - math.exp(self.c * (T - self.Tmax)))
+        
+        if mu_sqrt < 0:
+            return 0.0
+        
+        return mu_sqrt ** 2
 
     def evaluate(self, t):
-        # Gompertz model:
-        # N(t) = N0 * exp( ln(Ninf/N0) * (1 - exp(-b t)) )
-        return self.N0 * math.exp(math.log(self.Ninf / self.N0) * (1 - math.exp(-self.b * t)))
+        b_adj = self.adjusted_growth_rate()
+
+        if b_adj >= 0:
+            # Standard Gompertz growth
+            return self.N0 * math.exp(math.log(self.Ninf / self.N0) * (1 - math.exp(-b_adj * t)))
+        else:
+            # Death-phase Gompertz
+            k = -b_adj
+            N_min = 1e-6
+            return self.N0 * math.exp(-math.log(self.N0 / N_min) * math.exp(-k * t))
 
 
 def create_data(model):
@@ -72,7 +107,7 @@ def run_model(ininital_density,platau_density,growth_rate):
     platau_density = float(platau_density)
     growth_rate = float(growth_rate)
     
-    model=GompertzGrowth(ininital_density,platau_density,growth_rate)
+    model=GompertzGrowth(ininital_density,platau_density,growth_rate,temperature=37,Tmin=5,Tmax=45,c=0.01)
     growth_data = create_data(model)
     greatest_growth_index = get_highest_growth_step(growth_data)
     
