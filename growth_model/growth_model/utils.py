@@ -4,6 +4,7 @@ import math
 import pandas as pd
 from matplotlib import pyplot as plt
 import os
+
 class GompertzGrowth:
     def __init__(self, N0, Ninf, μopt, temperature, Tmin, Tmax,Topt):
         """
@@ -12,13 +13,13 @@ class GompertzGrowth:
         """
         self.N0 = N0 # Initial population density
         self.Ninf = Ninf # Maximum population density
-        self.temperature = temperature # Current temperature
-        self.Tmin = Tmin # Minimum temperature for growth
-        self.Tmax = Tmax #  Maximum temperature for growth
-        self.Topt = Topt
-        self.μopt = μopt
+        self.temperature = temperature + 273.15 # Current temperature in kelvin
+        self.Tmin = Tmin + 273.15 # Minimum temperature for growth in kelvin
+        self.Tmax = Tmax + 273.15 # Maximum temperature for growth in kelvin
+        self.Topt = Topt + 273.15 # Optimal temperature for growth in kelvin
+        self.μopt = μopt # Optimal growth rate
 
-        def temperature_dependent_growth_rate(self):
+    def temperature_dependent_growth_rate(self):
         #µ(𝑇)=µ𝑜𝑝𝑡·(𝑇−𝑇𝑚𝑎𝑥)·(𝑇−𝑇𝑚𝑖𝑛)2(𝑇𝑜𝑝𝑡−𝑇𝑚𝑖𝑛)·[(𝑇𝑜𝑝𝑡−𝑇𝑚𝑖𝑛)·(𝑇−𝑇𝑜𝑝𝑡)−(𝑇𝑜𝑝𝑡−𝑇𝑚𝑎𝑥)·(𝑇𝑜𝑝𝑡+𝑇𝑚𝑖𝑛−2·𝑇)]  This is this the new equation I'm trying to implment Lobry and Rosso 1991 it models bacterial growth while accounting for enzyme denatureation, the CTMI model
        
         # µ chemical potenial of substate at temperature T
@@ -28,33 +29,31 @@ class GompertzGrowth:
         # Tmax maximum temperature for growth
         # T current temperature
         # For now we will use a simplified version that reduces growth rate linearly beyond Tmax
-            denom = (self.temperature - self.Topt)**2
-            delim = (self.Topt - self.Tmin) * ((self.Topt - self.Tmin)*(self.temperature - self.Topt) - (self.Topt - self.Tmax)*(self.Topt + self.Tmin - 2*self.temperature))
-            μ = self.μopt *  (denom/ delim)
+            numerator = (self.temperature - self.Tmax) * (self.temperature - self.Tmin)**2
+            denomenator = (self.Topt - self.Tmin) * ((self.Topt - self.Tmin)*(self.temperature - self.Topt) - (self.Topt - self.Tmax)*(self.Topt + self.Tmin - 2*self.temperature))
+            μ = self.μopt *  (numerator/ denomenator)
             return  μ
 
-    def evaluate(self, t):
+    def evaluate_at_time_step(self, t):
         μ = self.temperature_dependent_growth_rate()
 
         # CASE 1: Growth
         if μ > 0:
             density_at_step = self.N0 * math.exp(math.log(self.Ninf / self.N0) * (1 - math.exp(-μ * t)))
-            return 
+            return density_at_step
         # CASE 2: Death
         else:
             N_min = 1e-6
             density_at_step = self.N0 * math.exp(-math.log(self.N0 / N_min) * math.exp(-μ * t))
             return density_at_step
 
-         
-    
-def create_data(model):
+def run_simulation(model,number_of_time_steps):
     time_steps = []
     densitys = []
     
-    for t in range(0, 30):
-        time_steps.append(t)
-        densitys.append(model.evaluate(t))
+    for t in range(0, number_of_time_steps): #Evaluate for 30 time steps
+        time_steps.append(t) # Make a list of the current time step
+        densitys.append(model.evaluate_at_time_step(t)) # make a list of the growth density at the current time step
 
     growth_data = pd.DataFrame({
         "time step": time_steps,
@@ -106,22 +105,21 @@ def get_max_min_optimal_temperature(species):
         "L.monocytogenes": (0, 45, 30),
         "P.aeruginosa": (4, 42, 37),
         "B.subtilis": (10, 50, 37),
-        "ecoli": (5, 45, 37),
     }
-    return species_temperatures.get(species, (5, 45, 37))
+    species_stats = species_temperatures.get(species)
+    return species_stats
 
-def run_model(ininital_density,platau_density,growth_rate,temperature,species):
+def run_model(ininital_density,platau_density,growth_rate,temperature,species,number_of_time_steps):
     ininital_density= float(ininital_density,)
     platau_density = float(platau_density)
     growth_rate = float(growth_rate)
+    temperature = float(temperature)
+    number_of_time_steps = int(number_of_time_steps)
     
-    tmax, tmin, topt = get_max_min_optimal_temperature(species)
-    model=GompertzGrowth(ininital_density,platau_density,growth_rate,temperature=37,Tmin=5,Tmax=45,c=0.01)
-    growth_data = create_data(model)
-    
-    
+    tmin, tmax, topt = get_max_min_optimal_temperature(species)
+    model=GompertzGrowth(ininital_density,platau_density,growth_rate,temperature,tmin,tmax,topt)
+    growth_data = run_simulation(model,number_of_time_steps)
     greatest_growth_index = get_highest_growth_step(growth_data)
-    
     basic_plotting(growth_data,greatest_growth_index)
     return growth_data
     
