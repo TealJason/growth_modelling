@@ -8,8 +8,8 @@ from pprint import pprint
 class GompertzGrowth:
     def __init__(self, N0, Ninf, μopt, temperature, Tmin, Tmax,Topt):
         """
-        k0: baseline death rate at Tmax
-        alpha: how fast death increases with temperature
+        model used for calculating the growth of bacteria under varying temperature conditions, 
+        based on the Gompertz growth model modified to include temperature dependence using the CTMI model from Lobry and Rosso 1991.
         """
         self.N0 = N0 # Initial population density
         self.Ninf = Ninf # Maximum population density
@@ -20,7 +20,10 @@ class GompertzGrowth:
         self.μopt = μopt # Optimal growth rate
 
     def temperature_dependent_growth_rate(self):
-        #µ(𝑇)=µ𝑜𝑝𝑡·(𝑇−𝑇𝑚𝑎𝑥)·(𝑇−𝑇𝑚𝑖𝑛)2(𝑇𝑜𝑝𝑡−𝑇𝑚𝑖𝑛)·[(𝑇𝑜𝑝𝑡−𝑇𝑚𝑖𝑛)·(𝑇−𝑇𝑜𝑝𝑡)−(𝑇𝑜𝑝𝑡−𝑇𝑚𝑎𝑥)·(𝑇𝑜𝑝𝑡+𝑇𝑚𝑖𝑛−2·𝑇)]  This is this the new equation I'm trying to implment Lobry and Rosso 1991 it will take bacterial growth under optimal conditions and modify it based on optimal maximal and minimal temperatures, the CTMI model
+        #µ(𝑇)=µ𝑜𝑝𝑡·(𝑇−𝑇𝑚𝑎𝑥)·(𝑇−𝑇𝑚𝑖𝑛)2(𝑇𝑜𝑝𝑡−𝑇𝑚𝑖𝑛)·[(𝑇𝑜𝑝𝑡−𝑇𝑚𝑖𝑛)·(𝑇−𝑇𝑜𝑝𝑡)−(𝑇𝑜𝑝𝑡−𝑇𝑚𝑎𝑥)·(𝑇𝑜𝑝𝑡+𝑇𝑚𝑖𝑛−2·𝑇)]  
+        
+        # This is this the new equation I'm trying to implment Lobry and Rosso 1991 the CTMI model
+        # It should takes the growth which occurs under optimal temperature conditions and modifies this value based on the distance to the max and min temperatures
        
         # µ 'chemical potenial of substate at temperature T'
         # µopt 'optimal chemical potential of substrate'
@@ -29,6 +32,7 @@ class GompertzGrowth:
         # Tmax maximum temperature for growth
         # T current temperature
         # For now we will use a simplified version that reduces growth rate linearly beyond Tmax and clamps to zero below Tmin
+        # This is becuse the model is not designed to work outside tmin and tmax
         
         if self.temperature < self.Tmin:
             print("No growth below minimum temperature")
@@ -48,16 +52,18 @@ class GompertzGrowth:
 
     def evaluate_at_time_step(self, t, μ):
         
-        # CASE 1: Growth
+        # CASE 1: Growth standard gompertz growth
         if μ > 0:
+            # N0 * e^( ln(Ninf / N0) * (1 - e^(-μ * t)) )
             density_at_step = self.N0 * math.exp(math.log(self.Ninf / self.N0) * (1 - math.exp(-μ * t)))
             return density_at_step
-        # CASE 2: Death
+        # CASE 2: Death modified gompertz growth this is stupid as fuck
         else:
+            # N0 * e^( - ln(N0 / N_min) * e^(-μ * t) )
             N_min = 1e-6
             density_at_step = self.N0 * math.exp(-math.log(self.N0 / N_min) * math.exp(-μ * t))
             return density_at_step
-
+                
 def run_simulation(model,number_of_time_steps):
     time_steps = []
     densitys = []
