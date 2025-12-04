@@ -5,59 +5,48 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import os
 class GompertzGrowth:
-    def __init__(self, N0, Ninf, b_max, temperature, Tmin, Tmax, c, k0=0.001, alpha=0.2):
+    def __init__(self, N0, Ninf, μopt, temperature, Tmin, Tmax,Topt):
         """
         k0: baseline death rate at Tmax
         alpha: how fast death increases with temperature
         """
-        self.N0 = N0
-        self.Ninf = Ninf
-        self.b_max = b_max
-        self.temperature = temperature
-        self.Tmin = Tmin
-        self.Tmax = Tmax
-        self.c = c
-        self.k0 = k0
-        self.alpha = alpha
+        self.N0 = N0 # Initial population density
+        self.Ninf = Ninf # Maximum population density
+        self.temperature = temperature # Current temperature
+        self.Tmin = Tmin # Minimum temperature for growth
+        self.Tmax = Tmax #  Maximum temperature for growth
+        self.Topt = Topt
+        self.μopt = μopt
 
-    def growth_rate(self):
-        T = self.temperature
-
-        # no growth below Tmin or above Tmax
-        if T <= self.Tmin or T >= self.Tmax:
-            return 0.0
-
-        # Ratkowsky above-optimal extension
-        mu_sqrt = self.b_max * (T - self.Tmin) * (1 - math.exp(self.c * (T - self.Tmax)))
-        if mu_sqrt < 0:
-            return 0.0
-
-        return mu_sqrt ** 2  # final μ
-
-    def death_rate(self):
-        T = self.temperature
-        if T <= self.Tmax:
-            return 0.0
-
-        # Arrhenius-like death scaling
-        return self.k0 * math.exp(self.alpha * (T - self.Tmax))
+        def temperature_dependent_growth_rate(self):
+        #µ(𝑇)=µ𝑜𝑝𝑡·(𝑇−𝑇𝑚𝑎𝑥)·(𝑇−𝑇𝑚𝑖𝑛)2(𝑇𝑜𝑝𝑡−𝑇𝑚𝑖𝑛)·[(𝑇𝑜𝑝𝑡−𝑇𝑚𝑖𝑛)·(𝑇−𝑇𝑜𝑝𝑡)−(𝑇𝑜𝑝𝑡−𝑇𝑚𝑎𝑥)·(𝑇𝑜𝑝𝑡+𝑇𝑚𝑖𝑛−2·𝑇)]  This is this the new equation I'm trying to implment Lobry and Rosso 1991 it models bacterial growth while accounting for enzyme denatureation, the CTMI model
+       
+        # µ chemical potenial of substate at temperature T
+        # µopt optimal chemical potential of substrate
+        # Topt optimal temperature for growth
+        # Tmin minimum temperature for growth
+        # Tmax maximum temperature for growth
+        # T current temperature
+        # For now we will use a simplified version that reduces growth rate linearly beyond Tmax
+            denom = (self.temperature - self.Topt)**2
+            delim = (self.Topt - self.Tmin) * ((self.Topt - self.Tmin)*(self.temperature - self.Topt) - (self.Topt - self.Tmax)*(self.Topt + self.Tmin - 2*self.temperature))
+            μ = self.μopt *  (denom/ delim)
+            return  μ
 
     def evaluate(self, t):
-        μ = self.growth_rate()
-        k = self.death_rate()
+        μ = self.temperature_dependent_growth_rate()
 
         # CASE 1: Growth
         if μ > 0:
-            return self.N0 * math.exp(math.log(self.Ninf / self.N0) *
-                                      (1 - math.exp(-μ * t)))
+            density_at_step = self.N0 * math.exp(math.log(self.Ninf / self.N0) * (1 - math.exp(-μ * t)))
+            return 
         # CASE 2: Death
-        if k > 0:
+        else:
             N_min = 1e-6
-            return self.N0 * math.exp(-math.log(self.N0 / N_min) *
-                                      math.exp(-k * t))
+            density_at_step = self.N0 * math.exp(-math.log(self.N0 / N_min) * math.exp(-μ * t))
+            return density_at_step
 
-        # CASE 3: No change
-        return self.N0
+         
     
 def create_data(model):
     time_steps = []
@@ -109,14 +98,28 @@ def basic_plotting(growth_data, greatest_growth_index):
     plt.tight_layout()
     plt.savefig(image_path)
     plt.close()
-    
-def run_model(ininital_density,platau_density,growth_rate):
+
+def get_max_min_optimal_temperature(species):
+    species_temperatures = {
+        "E.coli": (5, 45, 37),
+        "S.aureus": (10, 50, 37),
+        "L.monocytogenes": (0, 45, 30),
+        "P.aeruginosa": (4, 42, 37),
+        "B.subtilis": (10, 50, 37),
+        "ecoli": (5, 45, 37),
+    }
+    return species_temperatures.get(species, (5, 45, 37))
+
+def run_model(ininital_density,platau_density,growth_rate,temperature,species):
     ininital_density= float(ininital_density,)
     platau_density = float(platau_density)
     growth_rate = float(growth_rate)
     
-    model=GompertzGrowth(ininital_density,platau_density,growth_rate,temperature=90,Tmin=5,Tmax=45,c=0.01)
+    tmax, tmin, topt = get_max_min_optimal_temperature(species)
+    model=GompertzGrowth(ininital_density,platau_density,growth_rate,temperature=37,Tmin=5,Tmax=45,c=0.01)
     growth_data = create_data(model)
+    
+    
     greatest_growth_index = get_highest_growth_step(growth_data)
     
     basic_plotting(growth_data,greatest_growth_index)
