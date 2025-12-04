@@ -5,36 +5,12 @@
     <style>
         /* Center the form */
         form {
-            width: 500px;
+            width: 1000px;
             margin: auto;
+            align-self: center;
         }
-        
-        /* Each slider row as flex */
-        .slider-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        /* Label takes fixed width */
-        .slider-row label {
-            width: 150px;
-        }
-        
-        /* Slider takes remaining space */
-        .slider-row input[type=range] {
-            flex: 1;
-        }
-        
-        /* Number display: fixed width, slightly right-shifted */
-        .slider-row span {
-            display: inline-block;
-            width: 80px; /* fixed width prevents jumping */
-            text-align: right; /* shift numbers slightly to the right */
-            margin-left: 10px;
-            font-family: monospace; /* optional, makes width more consistent */
-        }
-        </style>
+
+            </style>
 
 </head>
 <body>
@@ -44,15 +20,15 @@
     <form id="growthform" method="POST" action="{% url 'index' %}">
         {% csrf_token %}
         <label for="i_density">Initial Density:</label>
-        <input type="range" id="i_density" name="i_density"  min="0.00001" max="1" step="0.01"value="0.1">
-        <span id="i_density_val">0.1</span><br><br>
+        <input type="range" id="i_density" name="i_density"  min="1" max="100" step="1"value="15">
+        <span id="i_density_val">15</span><br><br>
         
         <label for="p_density">Plateau Density:</label>
-        <input type="range" id="p_density" name="p_density" min="1" max="1000" value="1000">
-        <span id="p_density_val">1000</span><br><br>
+        <input type="range" id="p_density" name="p_density" min="1" max="5000" value="2500">
+        <span id="p_density_val">2500</span><br><br>
         
         <label for="g_rate">Growth Rate:</label>
-        <input type="range" id="g_rate" name="g_rate" min="0.1" max="1" step="0.01" value="0.15">
+        <input type="range" id="g_rate" name="g_rate" min="0.1" max="1" step="0.05" value="0.15">
         <span id="g_rate_val">0.15</span><br><br>
 
         <label for="temperature">Temperature:</label>
@@ -60,12 +36,28 @@
         <span id="temperature_val">37</span><br><br>
 
         <label for="time_steps">Time Steps:</label>
-        <input type="range" id="time_steps" name="time_steps" min="30" max="500" step="1" value="45">
+        <input type="range" id="time_steps" name="time_steps" min="30" max="10000" step="1" value="45">
         <span id="time_steps_val">45</span><br><br>
 
         <label for="Species to model"></label>
-        <input type="checkbox" id="species" name="species" value="E.coli" checked>
+        <input type="radio" id="species" name="species" value="E.coli" checked>
         <span>Model E.coli growth</span><br><br>        
+
+        <label for="Species to model"></label>
+        <input type="radio" id="species" name="species" value="S.aureus" >
+        <span>Model S.aureus growth</span><br><br>        
+
+        <label for="Species to model"></label>
+        <input type="radio" id="species" name="species" value="L.monocytogenes" >
+        <span>Model L.monocytogenes growth</span><br><br>        
+
+        <label for="Species to model"></label>
+        <input type="radio" id="species" name="species" value="P.aeruginosa" >
+        <span>Model P.aeruginosa growth</span><br><br>        
+
+        <label for="Species to model"></label>
+        <input type="radio" id="species" name="species" value="B.subtilis" >
+        <span>Model B.subtilis growth</span><br><br>        
 
         <input type="submit" value="Submit">
     </form>
@@ -89,8 +81,6 @@
         });
     </script>
 
-
-
 <h2>
 <div id="result_div" style="display: flex; gap: 20px; justify-content: center;"> 
     <!-- Results will be injected here -->
@@ -98,7 +88,7 @@
 </h2>
 
 <script>
-    const form = document.getElementById("growthform");
+    const form = document.getElementById("growthform"); // the form element we monitor for the posts 
 
     form.addEventListener("submit", function(e) {
         e.preventDefault(); // stop full page reload
@@ -115,7 +105,7 @@
         })
         .then(response => response.text())
         .then(html => {
-            document.getElementById("result_div").innerHTML = html;
+            document.getElementById("result_div").innerHTML = html; // where we injec the resutls
         })
         .catch(err => console.error("Error fetching result:", err));
     });

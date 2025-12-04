@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from .utils import run_model
+from django.utils.timezone import now
 
 def index(request):
     growth_html_string = None  # initialize to prevent reference errors
@@ -18,7 +19,7 @@ def index(request):
             growth_df = run_model(ininital_density, platau_density, growth_rate,
                                   temperature, species, number_of_time_steps)
             growth_html_string = growth_df.to_html(header=True, table_id="growth_table")
-            context = {"result": growth_html_string, "searched": True}
+            context = {"result": growth_html_string,"searched": True, "timestamp": now().timestamp()}
 
         # Check for AJAX request
         if request.headers.get("x-requested-with") == "XMLHttpRequest":

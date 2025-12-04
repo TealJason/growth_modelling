@@ -1,5 +1,8 @@
 {% load static %}
 <div>{{ result|safe }}</div>
 <div>
-    <img src="{% static 'images/scatter_growth.png' %}" alt="Result plot" style="max-width: 600px;">
+    <div>
+        <img src="{% static 'images/scatter_growth.png' %}?t={{ timestamp }}" 
+             alt="Result plot" style="max-width: 600px;">
+    </div>
 </div>
